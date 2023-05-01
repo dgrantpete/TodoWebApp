@@ -10,5 +10,5 @@ public class TodoContext : DbContext
     }
 
     public DbSet<TodoTask> TodoTasks { get; set; } = null!;
-    public DbSet<TodoUserAccount> TodoUsers { get; set; } = null!;
+    public DbSet<TodoUser> TodoUsers { get; set; } = null!;
 }
