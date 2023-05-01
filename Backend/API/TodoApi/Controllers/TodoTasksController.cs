@@ -54,7 +54,7 @@ namespace TodoApi.Controllers
                 return NotFound($"Task ID {id} not found under user ID {userId}.");
             }
 
-            return Ok(todoTask);
+            return Ok(_mapper.Map<TaskDTO>(todoTask));
         }
 
         // PUT: api/users/{userId}/tasks/5

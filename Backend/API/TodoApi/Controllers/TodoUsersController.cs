@@ -126,6 +126,6 @@ namespace TodoApi.Controllers
 
         private Task<bool> EmailUnique(string email) => _context.TodoUsers.AllAsync(e => e.Email != email);
 
-        private Task<bool> EmailUnique(string email, int id) => _context.TodoUsers.AllAsync(e => e.Id != id || e.Email != email);
+        private Task<bool> EmailUnique(string email, int id) => _context.TodoUsers.AllAsync(e => e.Id == id || e.Email != email);
     }
 }
