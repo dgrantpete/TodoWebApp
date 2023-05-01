@@ -12,7 +12,7 @@ using TodoApi.Models;
 namespace TodoApi.Migrations
 {
     [DbContext(typeof(TodoContext))]
-    [Migration("20230430060000_InitialCreate")]
+    [Migration("20230501155319_InitialCreate")]
     partial class InitialCreate
     {
         /// <inheritdoc />
@@ -43,7 +43,7 @@ namespace TodoApi.Migrations
                         .HasMaxLength(255)
                         .HasColumnType("character varying(255)");
 
-                    b.Property<DateTime>("Due")
+                    b.Property<DateTime?>("Due")
                         .HasColumnType("timestamp with time zone");
 
                     b.Property<string>("Title")

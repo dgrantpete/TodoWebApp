@@ -40,7 +40,7 @@ namespace TodoApi.Migrations
                         .HasMaxLength(255)
                         .HasColumnType("character varying(255)");
 
-                    b.Property<DateTime>("Due")
+                    b.Property<DateTime?>("Due")
                         .HasColumnType("timestamp with time zone");
 
                     b.Property<string>("Title")

@@ -24,32 +24,30 @@ namespace TodoApi.Controllers
             _mapper = mapper;
         }
 
-        // GET: api/tasks
+        // GET: api/users/{userId}/tasks
         [HttpGet]
-        public ActionResult<IEnumerable<TaskDTO>> GetTodoTasks(int userId)
+        public async Task<ActionResult<IEnumerable<TaskDTO>>> GetTodoTasks(int userId)
         {
-            if (_context.TodoTasks == null)
+            bool userExists = await _context.TodoUsers.AnyAsync(user => user.Id == userId);
+
+            if (!userExists)
             {
-                return NotFound();
+                return NotFound($"User ID {userId} not found.");
             }
 
-            IEnumerable<TaskDTO> todoTasks = GetTasksByUserID(userId)
-                .Select(taskModel => _mapper.Map<TaskDTO>(taskModel));
+            List<TaskDTO> result = await GetTasksByUserID(userId)
+                .Select(task => _mapper.Map<TaskDTO>(task))
+                .ToListAsync();
 
-            return Ok(todoTasks);
+            return Ok(result);
         }
 
-        // GET: api/tasks/5
+        // GET: api/users/{userId}/tasks/5
         [HttpGet("{id}")]
-        public ActionResult<TaskDTO> GetTodoTask(int id, int userId)
+        public async Task<ActionResult<TaskDTO>> GetTodoTask(int id, int userId)
         {
-            if (_context.TodoTasks == null)
-            {
-                return NotFound();
-            }
-
-            TodoTask? todoTask = GetTasksByUserID(userId)
-                .FirstOrDefault(task => task.Id == id);
+            TodoTask? todoTask = await GetTasksByUserID(userId)
+                .FirstOrDefaultAsync(task => id == task.Id);
 
             if (todoTask == null)
             {
@@ -59,19 +57,19 @@ namespace TodoApi.Controllers
             return Ok(todoTask);
         }
 
-        // PUT: api/tasks/5
+        // PUT: api/users/{userId}/tasks/5
         // To protect from overposting attacks, see https://go.microsoft.com/fwlink/?linkid=2123754
         [HttpPut("{id}")]
-        public IActionResult PutTodoTask(int id, int userId, TaskDTO taskDTO)
+        public async Task<IActionResult> PutTodoTask(int id, int userId, TaskDTO taskDTO)
         {
             if (id != taskDTO.Id)
             {
-                return BadRequest($"ID in URL ({id}) does not match ID in body ({taskDTO.Id}).");
+                return BadRequest($"Task ID in URL ({id}) does not match task ID in body ({taskDTO.Id}).");
             }
 
-            TodoTask? task = GetTasksByUserID(userId)
-                .FirstOrDefault(task => id == task.Id);
-
+            TodoTask? task = await GetTasksByUserID(userId)
+                .FirstOrDefaultAsync(task => id == task.Id);
+            
             if (task == null)
             {
                 return NotFound($"Task ID {id} not found under user ID {userId}.");
@@ -79,17 +77,21 @@ namespace TodoApi.Controllers
 
             _mapper.Map(taskDTO, task);
 
+            await _context.SaveChangesAsync();
+
             return NoContent();
         }
 
-        // POST: api/tasks
+        // POST: api/users/{userId}/tasks
         // To protect from overposting attacks, see https://go.microsoft.com/fwlink/?linkid=2123754
         [HttpPost]
         public async Task<ActionResult<TaskDTO>> PostTodoTask(int userId, CreateTaskDTO createTaskDTO)
         {
-            if (_context.TodoTasks == null)
+            bool userExists = await _context.TodoUsers.AnyAsync(user => user.Id == userId);
+
+            if (!userExists)
             {
-                return Problem("Entity set 'TodoContext.TodoTasks'  is null.");
+                return NotFound($"User ID {userId} not found.");
             }
 
             TodoTask task = _mapper.Map<TodoTask>(createTaskDTO);
@@ -105,27 +107,25 @@ namespace TodoApi.Controllers
             return CreatedAtAction(nameof(GetTodoTask), new { id = taskDTO.Id, userId = task.UserId }, taskDTO);
         }
 
-        // DELETE: api/tasks/5
+        // DELETE: api/users/{userId}/tasks/5
         [HttpDelete("{id}")]
         public async Task<IActionResult> DeleteTodoTask(int id)
         {
-            if (_context.TodoTasks == null)
-            {
-                return NotFound();
-            }
-            var todoTask = await _context.TodoTasks.FindAsync(id);
+            TodoTask? todoTask = await _context.TodoTasks.FindAsync(id);
+
             if (todoTask == null)
             {
-                return NotFound();
+                return NotFound($"Task ID {id} not found.");
             }
 
             _context.TodoTasks.Remove(todoTask);
+
             await _context.SaveChangesAsync();
 
             return NoContent();
         }
 
-        private bool TodoTaskExists(int id) => (_context.TodoTasks?.Any(e => e.Id == id)).GetValueOrDefault();
+        private Task<bool> TodoTaskExists(int id) => _context.TodoTasks.AnyAsync(e => e.Id == id);
 
         private IQueryable<TodoTask> GetTasksByUserID(int userId) => _context.TodoTasks.Where(e => e.UserId == userId);
     }

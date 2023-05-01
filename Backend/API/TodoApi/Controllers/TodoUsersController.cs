@@ -31,13 +31,9 @@ namespace TodoApi.Controllers
         [HttpGet]
         public async Task<ActionResult<IEnumerable<UserDTO>>> GetTodoUsers()
         {
-            if (_context.TodoUsers == null)
-            {
-                return NotFound();
-            }
-
-            IEnumerable<UserDTO> userDTOs = (await _context.TodoUsers.ToListAsync())
-                .Select(user => _mapper.Map<UserDTO>(user));
+            List<UserDTO> userDTOs = await _context.TodoUsers
+                .Select(user => _mapper.Map<UserDTO>(user))
+                .ToListAsync();
 
             return Ok(userDTOs);
         }
@@ -46,16 +42,11 @@ namespace TodoApi.Controllers
         [HttpGet("{id}")]
         public async Task<ActionResult<UserDTO>> GetTodoUser(int id)
         {
-            if (_context.TodoUsers == null)
-            {
-                return NotFound();
-            }
-
             TodoUser? todoUser = await _context.TodoUsers.FindAsync(id);
 
             if (todoUser == null)
             {
-                return NotFound();
+                return NotFound($"User ID {id} not found.");
             }
 
             return _mapper.Map<UserDTO>(todoUser);
@@ -75,10 +66,10 @@ namespace TodoApi.Controllers
 
             if (user == null)
             {
-                return NotFound();
+                return NotFound($"User ID {id} not found.");
             }
 
-            if (!EmailUnique(userDTO.Email, id))
+            if (!await EmailUnique(userDTO.Email, id))
             {
                 return BadRequest("Email address already associated with an existing account.");
             }
@@ -95,12 +86,7 @@ namespace TodoApi.Controllers
         [HttpPost]
         public async Task<ActionResult<UserDTO>> CreateAccount(CreateAccountDTO createAccountDTO)
         {
-            if (_context.TodoUsers == null)
-            {
-                return Problem("Entity set 'TodoContext.TodoUsers'  is null.");
-            }
-
-            if (!EmailUnique(createAccountDTO.Email))
+            if (!await EmailUnique(createAccountDTO.Email))
             {
                 return BadRequest("Email address already associated with an existing account.");
             }
@@ -122,16 +108,11 @@ namespace TodoApi.Controllers
         [HttpDelete("{id}")]
         public async Task<IActionResult> DeleteTodoUser(int id)
         {
-            if (_context.TodoUsers == null)
-            {
-                return NotFound();
-            }
-            
             TodoUser? todoUser = await _context.TodoUsers.FindAsync(id);
 
             if (todoUser == null)
             {
-                return NotFound();
+                return NotFound($"User ID {id} not found.");
             }
 
             _context.TodoUsers.Remove(todoUser);
@@ -141,10 +122,10 @@ namespace TodoApi.Controllers
             return NoContent();
         }
 
-        private bool TodoUserExists(int id) => (_context.TodoUsers?.Any(e => e.Id == id)).GetValueOrDefault();
+        private Task<bool> TodoUserExists(int id) => _context.TodoUsers.AnyAsync(e => e.Id == id);
 
-        private bool EmailUnique(string email) => !(_context.TodoUsers?.Any(e => e.Email == email)).GetValueOrDefault();
+        private Task<bool> EmailUnique(string email) => _context.TodoUsers.AnyAsync(e => e.Email == email);
 
-        private bool EmailUnique(string email, int id) => !(_context.TodoUsers?.Any(e => e.Email == email && e.Id != id)).GetValueOrDefault();
+        private Task<bool> EmailUnique(string email, int id) => _context.TodoUsers.AnyAsync(e => e.Email == email && e.Id != id);
     }
 }

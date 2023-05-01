@@ -38,7 +38,7 @@ namespace TodoApi.Migrations
                     Description = table.Column<string>(type: "character varying(255)", maxLength: 255, nullable: true),
                     Completed = table.Column<bool>(type: "boolean", nullable: false),
                     Created = table.Column<DateTime>(type: "timestamp with time zone", nullable: false),
-                    Due = table.Column<DateTime>(type: "timestamp with time zone", nullable: false),
+                    Due = table.Column<DateTime>(type: "timestamp with time zone", nullable: true),
                     UserId = table.Column<int>(type: "integer", nullable: false)
                 },
                 constraints: table =>
